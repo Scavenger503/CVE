@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CVE Detection Simulation</title>
+  <style>
+    body {
+      background-color: #0a0a0a;
+      color: #ff3b3b;
+      font-family: 'Courier New', monospace;
+      padding: 40px;
+      overflow: hidden;
+    }
+    .terminal {
+      background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+      border: 2px solid #ff3b3b;
+      border-radius: 10px;
+      padding: 20px;
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
+      box-shadow: 0 0 20px #ff3b3b;
+      position: relative;
+    }
+    .line {
+      display: block;
+      margin-bottom: 10px;
+      white-space: pre-wrap;
+    }
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 16px;
+      background-color: #ff3b3b;
+      animation: blink 1s infinite;
+      vertical-align: bottom;
+    }
+    .pulse {
+      animation: pulse 1s infinite;
+    }
+    .glitch {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(0deg, rgba(255,59,59,0.05), rgba(255,59,59,0.05) 1px, transparent 1px, transparent 2px);
+      animation: glitch 0.3s steps(2, start) infinite;
+      pointer-events: none;
+    }
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0; }
+    }
+    @keyframes pulse {
+      0% { color: #ff3b3b; text-shadow: 0 0 5px #ff3b3b; }
+      50% { color: #ffffff; text-shadow: 0 0 20px #ff3b3b; }
+      100% { color: #ff3b3b; text-shadow: 0 0 5px #ff3b3b; }
+    }
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 1px); }
+      40% { transform: translate(2px, -1px); }
+      60% { transform: translate(-1px, 2px); }
+      80% { transform: translate(1px, -2px); }
+      100% { transform: translate(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal" id="terminal">
+    <div class="glitch"></div>
+  </div>
+  <script>
+    window.onload = function() {
+      const terminal = document.getElementById("terminal");
+      const glitchLayer = terminal.querySelector('.glitch');
+      const lines = [
+        "> scanning target: 192.168.0.14",
+        "> scanning open ports...",
+        "> port 445/tcp open (SMB)",
+        "> vulnerability detected: CVE-2021-34527",
+        "> description: Windows Print Spooler Remote Code Execution (PrintNightmare)",
+        "> severity: CRITICAL (CVSS 9.8)",
+        "> exploit path: \\spooler_service\\remote_job -> shell execution",
+        "> recommended action: Apply KB5004945 immediately",
+        "> log saved to: ./vuln_reports/192.168.0.14.txt"
+      ];
+
+      let currentLine = 0;
+      let charIndex = 0;
+      const speed = 25;
+      let lineElement = null;
+      const pulseLines = [3, 5];
+      let cursor = null;
+
+      function resetTerminal() {
+        if (cursor) {
+          terminal.removeChild(cursor);
+          cursor = null;
+        }
+        const allLines = terminal.querySelectorAll('.line');
+        allLines.forEach(el => el.remove());
+        currentLine = 0;
+        charIndex = 0;
+        lineElement = null;
+        setTimeout(typeLine, 1000);
+      }
+
+      function typeLine() {
+        if (!lineElement) {
+          lineElement = document.createElement("span");
+          lineElement.className = "line";
+          terminal.insertBefore(lineElement, glitchLayer);
+        }
+
+        const currentText = lines[currentLine];
+
+        if (charIndex < currentText.length) {
+          lineElement.textContent += currentText[charIndex++];
+          setTimeout(typeLine, speed);
+        } else {
+          if (pulseLines.includes(currentLine)) {
+            lineElement.classList.add("pulse");
+          }
+          lineElement = null;
+          charIndex = 0;
+          currentLine++;
+          if (currentLine < lines.length) {
+            setTimeout(typeLine, 500);
+          } else {
+            cursor = document.createElement("span");
+            cursor.className = "cursor";
+            terminal.insertBefore(cursor, glitchLayer);
+            setTimeout(resetTerminal, 4000);
+          }
+        }
+      }
+
+      typeLine();
+    };
+  </script>
+</body>
+</html>
